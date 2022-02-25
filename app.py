@@ -12,6 +12,9 @@ from datetime import date
 from datetime import datetime
 from difflib import SequenceMatcher
 import datetime
+import uuid
+from bson.objectid import ObjectId
+
 
 
 
@@ -27,6 +30,8 @@ current_time = test[0]
 
 db = conn['dev']
 collection_hotels = db.hotels
+collection_passwords = db.passwords
+collection_users = db.users
 
 app = Flask(__name__)
 YOUR_DOMAIN = 'http://localhost:3000'
@@ -418,6 +423,24 @@ def roomnumber(room_number):
         data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
         data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
 
+        password_data = collection_passwords.find_one()
+        pass_data = password_data["data"]
+        room_key = ""
+        user = ""
+
+        for key, value in pass_data.items():
+            if room_number == key:
+                room_key = value
+                break
+            else:
+                room_key = "No Password"
+
+        try:
+            data_user = collection_users.find_one({"data.room":room_number})
+            user = data_user["data"]["lastname"]     
+        except:
+            user = "No User"
+
         def training():
             d = True
             m = False
@@ -489,6 +512,8 @@ def roomnumber(room_number):
                 real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " AM"
             room = {
                 'floor': roomdata[-3],
+                'user': user,
+                'key': room_key,
                 'motion': str(presence()),
                 'room': roomdata[-2],
                 'role': roomdata[-1],
@@ -505,6 +530,8 @@ def roomnumber(room_number):
                 real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
             room = {
                 'floor': roomdata[-3],
+                'user': user,
+                'key': room_key,
                 'motion': str(presence()),
                 'room': roomdata[-2],
                 'role': roomdata[-1],
@@ -601,6 +628,21 @@ def roomnumber(room_number):
         data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
         data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
 
+        for key, value in pass_data.items():
+            if room_number == key:
+                room_key = value
+                break
+            else:
+                room_key = "No Password"
+        try:
+            data_user = collection_users.find_one({"data.room":room_number})
+            user = data_user["data"]["lastname"]
+            print("IT WORKED",str(user))
+            
+        except:
+            print("IT DID NOT WORK")
+            user = "No User"
+
         def training():
             d = True
             m = False
@@ -662,6 +704,8 @@ def roomnumber(room_number):
                     real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " AM"
                 room = {
                     'floor': roomdata[-3],
+                    'user': user,
+                    'key': room_key,
                     'motion': str(presence()),
                     'room': roomdata[-2],
                     'role': roomdata[-1],
@@ -673,6 +717,8 @@ def roomnumber(room_number):
                 real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
                 room = {
                     'floor': roomdata[-3],
+                    'user': user,
+                    'key': room_key,
                     'motion': str(presence()),
                     'room': roomdata[-2],
                     'role': roomdata[-1],
@@ -683,6 +729,8 @@ def roomnumber(room_number):
         except:
             room = {
                     'floor': "Not Active",
+                    'user': user,
+                    'key': room_key,
                     'motion': "Not Active",
                     'room': "Not Active",
                     'role': "Not Active",
@@ -729,19 +777,40 @@ def hotelportal():
 @app.route('/usersignin', methods=['POST'])
 def usersignin():
     password = request.form.get("pass")
-    mongo = collection_hotels.find_one()
-    data = mongo['data']
+    firstname = request.form.get("firstname")
+    lastname = request.form.get("lastname")
+    departure_date = request.form.get("date")
+
+    room = ""
+    user = {}
+    incorrect = "Incorrect Password"
+    data_passwords = collection_passwords.find_one()
+    data_pass = data_passwords["data"]
+
+    for key, value in data_pass.items():
+            if password == value:
+                room = key
+                break
+            else:
+                room = incorrect
+
+    if room != incorrect:
+        user['firstname'] = firstname
+        user['lastname'] = lastname
+        user['depart_date'] = departure_date
+        user['room'] = room
+        collection_users.insert_one({'data': user})
+    else:
+        room = incorrect
+
     try:
-        if password in data:
-            return redirect('/customerportal/{}'.format(password))
-        return redirect('http://localhost:3000')
+        return redirect('http://localhost:3000/customerportal/{}'.format(room))
     except:
         return redirect('http://localhost:3000')
 
 @app.route('/createhotelportal', methods = ['POST'])
 def createhotelportal():
     data = {}
-     
     # Open a csv reader called DictReader
     with open(request.form.get('myfile'), encoding='utf-8') as csvf:
         csvReader = csv.DictReader(csvf)
@@ -768,7 +837,24 @@ def createhotelportal():
             # else:
             #     data.append(rows['col9'])
     
-    print(data)           
+    print(data)
+    #insert password generation code here
+    pass_dict = {}
+
+    i = str(uuid.uuid4())
+    password = i.split('-')[0]
+    print(password)
+    print(type(password))
+
+
+    for floor in data:
+        for room in data[floor]:
+            str_room = str(room)
+            uid = str(uuid.uuid4())
+            password = uid.split('-')[0]
+            pass_dict[str_room] = password
+    
+    collection_passwords.insert_one({"data":pass_dict})
     collection_hotels.insert_one({"data":data})
     return redirect(YOUR_DOMAIN+"/hotelportal")
 
@@ -778,7 +864,21 @@ def createportaljs():
     success_url=YOUR_DOMAIN + '?success=true&session_id=create-portal',
     return redirect(success_url, code=303)
 
-
+@app.route('/refreshuser', methods=['POST'])
+def refreshuser():
+    room = request.form.get("roominfo")
+    print(room)
+    uid = str(uuid.uuid4())
+    password = uid.split('-')[0]
+    print(password)
+    collection_passwords.update_one(
+            {"_id": ObjectId("62180d227658c3c76c86e444")},
+            {"$set":
+             {"data.{}".format(room):password}}
+        )
+    collection_users.delete_one({"data.room":room})
+    return redirect('http://localhost:3000/hotelportal')
+    
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
