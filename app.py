@@ -802,11 +802,11 @@ def usersignin():
         collection_users.insert_one({'data': user})
     else:
         room = incorrect
-
-    try:
+    
+    if room == incorrect:
+        return redirect('http://localhost:3000/error')
+    else:
         return redirect('http://localhost:3000/customerportal/{}'.format(room))
-    except:
-        return redirect('http://localhost:3000')
 
 @app.route('/createhotelportal', methods = ['POST'])
 def createhotelportal():
@@ -855,6 +855,7 @@ def createhotelportal():
             pass_dict[str_room] = password
     
     collection_passwords.insert_one({"data":pass_dict})
+    collection_passwords.insert_one({"id":"hotelpasswords"})
     collection_hotels.insert_one({"data":data})
     return redirect(YOUR_DOMAIN+"/hotelportal")
 
@@ -872,7 +873,7 @@ def refreshuser():
     password = uid.split('-')[0]
     print(password)
     collection_passwords.update_one(
-            {"_id": ObjectId("62180d227658c3c76c86e444")},
+            {"id": "hotelpasswords"},
             {"$set":
              {"data.{}".format(room):password}}
         )
