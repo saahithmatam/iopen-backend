@@ -876,7 +876,7 @@ def refreshuser():
             {"$set":
              {"data.{}".format(room):password}}
         )
-    collection_users.delete_one({"data.room":room})
+    collection_users.delete_many({"data.room":room})
     return redirect('http://localhost:3000/hotelportal')
     
 
