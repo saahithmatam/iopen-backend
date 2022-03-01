@@ -40,509 +40,7 @@ YOUR_DOMAIN = 'http://localhost:3000'
 
 @app.route('/customerportal/<room_number>')
 def customerportal(room_number):
-    #mongo instance to retrieve data needed
-    try:
-        query = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort:[2]
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && MessageDate.date >= `%s` "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today)
-        #change
-        query_door = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort: [2]
-                filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' && MessageDate.date >= `%s` "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today)
-        query_temp = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort:[2]
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && MessageDate.date >= `%s` && DataType == 'TemperatureData' && PlotLabel == 'Fahrenheit' "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today)
-        basic = HTTPBasicAuth('utd1', 'NhWv0dEW')
-
-
-        url = 'https://utd1.safestay365.com/graphql'
-        json_query = { 'query' : query }
-        json_temp_query = {'query' : query_temp }
-        json_door_query = {'query' : query_door } #change
-
-        headers = {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                        }
-
-        r = requests.post(url=url, json=json_query, headers=headers, auth=basic)
-        t = requests.post(url=url, json=json_temp_query, headers=headers, auth=basic)
-        d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
-
-        data = json.loads(r.text)
-        data_t = json.loads(t.text)
-        data_d = json.loads(d.text) #change
-
-        data_room = data['data']['dataset']['streams']['messages']['report']['rows']
-        data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
-        data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
-
-        roomdata = data_room[-1]
-
-        try:
-            roomdata_temp = data_temp[-1]
-            temp_list = str(roomdata_temp[3]).split('.')
-            temperature = int(temp_list[0])
-        except:
-            temperature = "Unknown"
-
-        try:
-            roomdata_door = data_door[-1] #change
-        except:
-            door = "Unknown"
-
-        print(roomdata_door)
-        
-        string_data = str(roomdata_door[1])
-
-        
-        #change for real
-        if roomdata_door[3] == True:
-            door = "CLOSED"
-        elif roomdata_door[3] == False:
-            door = "OPEN"
-        else:
-            door = "OPEN"
-
-        if(len(string_data)==6):
-            if int(string_data[:2]) > 12:
-                real_time = str(int(string_data[:2])-12) + ":{}".format(string_data[2:4]) + " PM"
-            else:
-                real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " AM"
-            room = {
-                'floor': roomdata[-3],
-                'motion': roomdata[3],
-                'room': roomdata[-2],
-                'role': roomdata[-1],
-                'time': real_time,
-                'temperature': temperature,
-                'door': door #change
-
-
-                }
-        else:
-            real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
-            room = {
-                'floor': roomdata[-3],
-                'motion': roomdata[3],
-                'room': roomdata[-2],
-                'role': roomdata[-1],
-                'time': real_time,
-                'temperature': temperature,
-                'door': door #change
-            }
- 
-        return room
-    except:
-        query = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && MessageDate.date >= `%s` "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today)
-        #change
-        query_door = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' && MessageDate.date >= `%s` "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today) 
-        query_temp = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && MessageDate.date >= `%s` && DataType == 'TemperatureData' && PlotLabel == 'Fahrenheit' "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today)
-        basic = HTTPBasicAuth('utd1', 'NhWv0dEW')
-
-
-        url = 'https://utd1.safestay365.com/graphql'
-
-        json_query = { 'query' : query }
-        json_temp_query = {'query' : query_temp }
-        json_door_query = {'query' : query_door } #change
-
-
-        headers = {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                        }
-
-        r = requests.post(url=url, json=json_query, headers=headers, auth=basic)
-        t = requests.post(url=url, json=json_temp_query, headers=headers, auth=basic)
-        d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
-
-
-        data = json.loads(r.text)
-        data_t = json.loads(t.text)
-        data_d = json.loads(d.text) #change
-
-        data_room = data['data']['dataset']['streams']['messages']['report']['rows']
-        data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
-        data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
-
-
-        try:
-            roomdata_door = data_door[-1] #change
-            roomdata_temp = data_temp[-1]
-            roomdata = data_room[-1]
-
-            temp_list = str(roomdata_temp[3]).split('.')
-            temperature = int(temp_list[0])
-            string_data = str(roomdata_door[1])
-
-            if roomdata_door[3] == True:
-                door = "CLOSED"
-            elif roomdata_door[3] == False:
-                door = "OPEN"
-            else:
-                door = "OPEN"
-
-            if(len(string_data)==6):
-                if int(string_data[:2]) > 12:
-                    real_time = str(int(string_data[:2])-12) + ":{}".format(string_data[2:4]) + " PM"
-                else:
-                    real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " AM"
-                room = {
-                    'floor': roomdata[-3],
-                    'motion': roomdata[3],
-                    'room': roomdata[-2],
-                    'role': roomdata[-1],
-                    'time': real_time,
-                    'temperature': temperature
-
-                    }
-            else:
-                real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
-                room = {
-                    'floor': roomdata[-3],
-                    'motion': roomdata[3],
-                    'room': roomdata[-2],
-                    'role': roomdata[-1],
-                    'time': real_time,
-                    'temperature': temperature,
-                    'door':door,
-                }
-        except:
-            room = {
-                    'floor': "Not Active",
-                    'motion': "Not Active",
-                    'room': "Not Active",
-                    'role': "Not Active",
-                    'time': "Not Active",
-                    'temperature': "Not Active",
-                    'door': "Not Active"
-                }
- 
-        return room
-@app.route('/floorinfo/<floor_number>')
-def floor_json(floor_number):
-    sample = collection_hotels.find_one()
-    sample_data = sample['data'][floor_number]
-    floor_json = json.dumps(sample_data)
-    return floor_json
-
-    
-
-@app.route('/roominfo/<room_number>')
-def roomnumber(room_number):
-    try:
-        query = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort:[2]
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && MessageDate.date >= `%s` "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today)
-        #change
-        query_door = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort: [2]
-                filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' && MessageDate.date >= `%s` "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today)
-        query_temp = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort:[2]
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && MessageDate.date >= `%s` && DataType == 'TemperatureData' && PlotLabel == 'Fahrenheit' "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number,today)
-        basic = HTTPBasicAuth('utd1', 'NhWv0dEW')
-
-
-        url = 'https://utd1.safestay365.com/graphql'
-        json_query = { 'query' : query }
-        json_temp_query = {'query' : query_temp }
-        json_door_query = {'query' : query_door } #change
-
-        headers = {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                        }
-
-        r = requests.post(url=url, json=json_query, headers=headers, auth=basic)
-        t = requests.post(url=url, json=json_temp_query, headers=headers, auth=basic)
-        d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
-
-        data = json.loads(r.text)
-        data_t = json.loads(t.text)
-        data_d = json.loads(d.text) #change
-
-        data_room = data['data']['dataset']['streams']['messages']['report']['rows']
-        data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
-        data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
-
-        password_data = collection_passwords.find_one()
-        pass_data = password_data["data"]
-        room_key = ""
-        user = ""
-
-        for key, value in pass_data.items():
-            if room_number == key:
-                room_key = value
-                break
-            else:
-                room_key = "No Password"
-
-        try:
-            data_user = collection_users.find_one({"data.room":room_number})
-            user = data_user["data"]["lastname"]     
-        except:
-            user = "No User"
-
-        def training():
-            d = True
-            m = False
-            mth = False
-            room = []
-                    
-            for rows in data_room:
-                if rows[-1] == 'M':
-                    m = rows[-7]
-                elif rows[-1] == 'MTH':
-                    mth = rows[-7]
-                else:
-                    d = rows[-7]
-
-            room = [d,m,mth]       
-
-            return room  
-
-        def presence():
-            presence = False
-            room_list = training()
-            print(room_list)
-
-            if room_list == ['True','False','True'] or room_list == ['True','True','True'] or room_list == ['True','True','False'] or room_list == ['False','True','True'] or room_list == ['False','True','False']:
-                presence = True
-            else:
-                presence = False
-
-            return presence    
-
-        try:
-            print("Presence: "+ str(presence()))
-        except:
-            print("Presence not detected!")
-
-
-
-        roomdata = data_room[-1]
-
-        try:
-            roomdata_temp = data_temp[-1]
-            temp_list = str(roomdata_temp[3]).split('.')
-            temperature = int(temp_list[0])
-        except:
-            temperature = "Unknown"
-
-        try:
-            roomdata_door = data_door[-1] #change
-        except:
-            door = "Unknown"
-
-        print(roomdata_door)
-        string_data = str(roomdata_door[1])
-
-        if roomdata_door[3] == 'True':
-            door = "CLOSED"
-        elif roomdata_door[3] == 'False':
-            door = "OPEN"
-        else:
-            door = "OPEN"
-
-
-        if(len(string_data)==6):
-            if int(string_data[:2]) == 12:
-                real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " PM"
-            elif int(string_data[:2]) > 12:
-                real_time = str(int(string_data[:2])-12) + ":{}".format(string_data[2:4]) + " PM"
-            else:
-                real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " AM"
-            room = {
-                'floor': roomdata[-3],
-                'user': user,
-                'key': room_key,
-                'motion': str(presence()),
-                'room': roomdata[-2],
-                'role': roomdata[-1],
-                'time': real_time,
-                'temperature': temperature,
-                'door': door #change
-
-
-                }
-        else:
-            if string_data[:1] == 0:
-                real_time = "12" + ":{}".format(string_data[1:3]) + " AM"
-            else:
-                real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
-            room = {
-                'floor': roomdata[-3],
-                'user': user,
-                'key': room_key,
-                'motion': str(presence()),
-                'room': roomdata[-2],
-                'role': roomdata[-1],
-                'time': real_time,
-                'temperature': temperature,
-                'door': door #change
-            }
- 
-        return room
-    except:
-        query = """
+    query = """
         query {
         dataset {
             streams {
@@ -563,7 +61,7 @@ def roomnumber(room_number):
         }
         """ % (room_number)
         #change
-        query_door = """
+    query_door = """
         query {
         dataset {
             streams {
@@ -583,7 +81,7 @@ def roomnumber(room_number):
         }
         }
         """ % (room_number) 
-        query_temp = """
+    query_temp = """
         query {
         dataset {
             streams {
@@ -603,146 +101,369 @@ def roomnumber(room_number):
         }
         }
         """ % (room_number)
-        basic = HTTPBasicAuth('utd1', 'NhWv0dEW')
+    basic = HTTPBasicAuth('utd1', 'NhWv0dEW')
 
 
-        url = 'https://utd1.safestay365.com/graphql'
+    url = 'https://utd1.safestay365.com/graphql'
 
-        json_query = { 'query' : query }
-        json_temp_query = {'query' : query_temp }
-        json_door_query = {'query' : query_door } #change
-
-
-        headers = {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                        }
-
-        r = requests.post(url=url, json=json_query, headers=headers, auth=basic)
-        t = requests.post(url=url, json=json_temp_query, headers=headers, auth=basic)
-        d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
+    json_query = { 'query' : query }
+    json_temp_query = {'query' : query_temp }
+    json_door_query = {'query' : query_door } #change
 
 
-        data = json.loads(r.text)
-        data_t = json.loads(t.text)
-        data_d = json.loads(d.text) #change
-
-        data_room = data['data']['dataset']['streams']['messages']['report']['rows']
-        data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
-        data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
-
-        for key, value in pass_data.items():
-            if room_number == key:
-                room_key = value
-                break
-            else:
-                room_key = "No Password"
-        try:
-            data_user = collection_users.find_one({"data.room":room_number})
-            user = data_user["data"]["lastname"]
-            print("IT WORKED",str(user))
-            
-        except:
-            print("IT DID NOT WORK")
-            user = "No User"
-
-        def training():
-            d = True
-            m = False
-            mth = False
-            room = []
-                    
-            for rows in data_room:
-                if rows[-1] == 'M':
-                    m = rows[-7]
-                elif rows[-1] == 'MTH':
-                    mth = rows[-7]
-                else:
-                    d = rows[-7]
-
-            room = [d,m,mth]       
-
-            return room  
-
-        def presence():
-            presence = False
-            room_list = training()
-            print(room_list)
-
-            if room_list == ['True','False','True'] or room_list == ['True','True','True'] or room_list == ['True','True','False'] or room_list == ['False','True','True'] or room_list == ['False','True','False']:
-                presence = True
-            else:
-                presence = False
-
-            return presence    
-
-        try:
-            print("Presence: "+ str(presence()))
-        except:
-            print("Presence not detected!")
-
-        try:
-            roomdata_door = data_door[-1] #change
-            roomdata_temp = data_temp[-1]
-            roomdata = data_room[-1]
-
-            temp_list = str(roomdata_temp[3]).split('.')
-            temperature = int(temp_list[0])
-            string_data = str(roomdata_door[1])
-
-            print(roomdata_door[3])
-            print(roomdata_door)
-
-            if roomdata_door[3] == 'True':
-                door = "CLOSED"
-            elif roomdata_door[3] == 'False':
-                door = "OPEN"
-            else:
-                door = "OPEN"
-
-            if(len(string_data)==6):
-                if int(string_data[:2]) > 12:
-                    real_time = str(int(string_data[:2])-12) + ":{}".format(string_data[2:4]) + " PM"
-                else:
-                    real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " AM"
-                room = {
-                    'floor': roomdata[-3],
-                    'user': user,
-                    'key': room_key,
-                    'motion': str(presence()),
-                    'room': roomdata[-2],
-                    'role': roomdata[-1],
-                    'time': real_time,
-                    'temperature': temperature
-
+    headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
                     }
+
+    r = requests.post(url=url, json=json_query, headers=headers, auth=basic)
+    t = requests.post(url=url, json=json_temp_query, headers=headers, auth=basic)
+    d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
+
+
+    data = json.loads(r.text)
+    data_t = json.loads(t.text)
+    data_d = json.loads(d.text) #change
+
+    data_room = data['data']['dataset']['streams']['messages']['report']['rows']
+    data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
+    data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
+
+    password_data = collection_passwords.find_one()
+    pass_data = password_data["data"]
+    room_key = ""
+    user = ""
+
+    for key, value in pass_data.items():
+        if room_number == key:
+            room_key = value
+            break
+        else:
+            room_key = "No Password"
+    try:
+        data_user = collection_users.find_one({"data.room":room_number})
+        user = data_user["data"]["lastname"]
+        print("IT WORKED",str(user))
+        
+    except:
+        print("IT DID NOT WORK")
+        user = "No User"
+
+    def training():
+        d = True
+        m = False
+        mth = False
+        room = []
+                
+        for rows in data_room:
+            if rows[-1] == 'M':
+                m = rows[-7]
+            elif rows[-1] == 'MTH':
+                mth = rows[-7]
             else:
-                real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
-                room = {
-                    'floor': roomdata[-3],
-                    'user': user,
-                    'key': room_key,
-                    'motion': str(presence()),
-                    'room': roomdata[-2],
-                    'role': roomdata[-1],
-                    'time': real_time,
-                    'temperature': temperature,
-                    'door':door,
-                }
-        except:
+                d = rows[-7]
+
+        room = [d,m,mth]       
+
+        return room  
+
+    def presence():
+        presence = False
+        room_list = training()
+        print(room_list)
+
+        if room_list == ['True','False','True'] or room_list == ['True','True','True'] or room_list == ['True','True','False'] or room_list == ['False','True','True'] or room_list == ['False','True','False']:
+            presence = True
+        else:
+            presence = False
+
+        return presence    
+
+    try:
+        print("Presence: "+ str(presence()))
+    except:
+        print("Presence not detected!")
+
+    try:
+        roomdata_door = data_door[-1] #change
+        roomdata_temp = data_temp[-1]
+        roomdata = data_room[-1]
+
+        temp_list = str(roomdata_temp[3]).split('.')
+        temperature = int(temp_list[0])
+        string_data = str(roomdata_door[1])
+
+        print(roomdata_door[3])
+        print(roomdata_door)
+
+        if roomdata_door[3] == 'True':
+            door = "CLOSED"
+        elif roomdata_door[3] == 'False':
+            door = "OPEN"
+        else:
+            door = "OPEN"
+
+        if(len(string_data)==6):
+            if int(string_data[:2]) > 12:
+                real_time = str(int(string_data[:2])-12) + ":{}".format(string_data[2:4]) + " PM"
+            else:
+                real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " AM"
             room = {
-                    'floor': "Not Active",
-                    'user': user,
-                    'key': room_key,
-                    'motion': "Not Active",
-                    'room': "Not Active",
-                    'role': "Not Active",
-                    'time': "Not Active",
-                    'temperature': "Not Active",
-                    'door': "Not Active"
+                'floor': roomdata[-3],
+                'user': user,
+                'key': room_key,
+                'motion': str(presence()),
+                'room': roomdata[-2],
+                'role': roomdata[-1],
+                'time': real_time,
+                'temperature': temperature,
+                'door': door
                 }
- 
-        return room
+        else:
+            real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
+            room = {
+                'floor': roomdata[-3],
+                'user': user,
+                'key': room_key,
+                'motion': str(presence()),
+                'room': roomdata[-2],
+                'role': roomdata[-1],
+                'time': real_time,
+                'temperature': temperature,
+                'door':door,
+            }
+    except:
+        room = {
+                'floor': "Not Active",
+                'user': user,
+                'key': room_key,
+                'motion': "Not Active",
+                'room': "Not Active",
+                'role': "Not Active",
+                'time': "Not Active",
+                'temperature': "Not Active",
+                'door': "Not Active"
+            }
+
+    return room
+
+@app.route('/floorinfo/<floor_number>')
+def floor_json(floor_number):
+    sample = collection_hotels.find_one()
+    sample_data = sample['data'][floor_number]
+    floor_json = json.dumps(sample_data)
+    return floor_json
+
+    
+
+@app.route('/roominfo/<room_number>')
+def roomnumber(room_number):
+    query = """
+    query {
+    dataset {
+        streams {
+        messages {
+            report(
+            cores: 10
+            dims: "DataMessageGUID"
+            vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
+            sort:[2]
+            filter2: "rooms_sensors.role != '' && room.name == '%s' "
+            ) {
+            size
+            rows(take: -1)
+            }
+        }
+        }
+    }
+    }
+    """ % (room_number)
+    #change
+    query_door = """
+    query {
+    dataset {
+        streams {
+        messages {
+            report(
+            cores: 10
+            dims: "DataMessageGUID"
+            vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
+            sort:[2]
+            filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' "
+            ) {
+            size
+            rows(take: -1)
+            }
+        }
+        }
+    }
+    }
+    """ % (room_number) 
+    query_temp = """
+    query {
+    dataset {
+        streams {
+        messages {
+            report(
+            cores: 10
+            dims: "DataMessageGUID"
+            vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
+            sort:[2]
+            filter2: "rooms_sensors.role != '' && room.name == '%s' && DataType == 'TemperatureData' && PlotLabel == 'Fahrenheit' "
+            ) {
+            size
+            rows(take: -1)
+            }
+        }
+        }
+    }
+    }
+    """ % (room_number)
+    basic = HTTPBasicAuth('utd1', 'NhWv0dEW')
+
+
+    url = 'https://utd1.safestay365.com/graphql'
+
+    json_query = { 'query' : query }
+    json_temp_query = {'query' : query_temp }
+    json_door_query = {'query' : query_door } #change
+
+
+    headers = {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                    }
+
+    r = requests.post(url=url, json=json_query, headers=headers, auth=basic)
+    t = requests.post(url=url, json=json_temp_query, headers=headers, auth=basic)
+    d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
+
+
+    data = json.loads(r.text)
+    data_t = json.loads(t.text)
+    data_d = json.loads(d.text) #change
+
+    data_room = data['data']['dataset']['streams']['messages']['report']['rows']
+    data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
+    data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
+
+    password_data = collection_passwords.find_one()
+    pass_data = password_data["data"]
+    room_key = ""
+    user = ""
+
+    for key, value in pass_data.items():
+        if room_number == key:
+            room_key = value
+            break
+        else:
+            room_key = "No Password"
+    try:
+        data_user = collection_users.find_one({"data.room":room_number})
+        user = data_user["data"]["lastname"]
+        print("IT WORKED",str(user))
+        
+    except:
+        print("IT DID NOT WORK")
+        user = "No User"
+
+    def training():
+        d = True
+        m = False
+        mth = False
+        room = []
+                
+        for rows in data_room:
+            if rows[-1] == 'M':
+                m = rows[-7]
+            elif rows[-1] == 'MTH':
+                mth = rows[-7]
+            else:
+                d = rows[-7]
+
+        room = [d,m,mth]       
+
+        return room  
+
+    def presence():
+        presence = False
+        room_list = training()
+        print(room_list)
+
+        if room_list == ['True','False','True'] or room_list == ['True','True','True'] or room_list == ['True','True','False'] or room_list == ['False','True','True'] or room_list == ['False','True','False']:
+            presence = True
+        else:
+            presence = False
+
+        return presence    
+
+    try:
+        print("Presence: "+ str(presence()))
+    except:
+        print("Presence not detected!")
+
+    try:
+        roomdata_door = data_door[-1] #change
+        roomdata_temp = data_temp[-1]
+        roomdata = data_room[-1]
+
+        temp_list = str(roomdata_temp[3]).split('.')
+        temperature = int(temp_list[0])
+        string_data = str(roomdata_door[1])
+
+        print(roomdata_door[3])
+        print(roomdata_door)
+
+        if roomdata_door[3] == 'True':
+            door = "CLOSED"
+        elif roomdata_door[3] == 'False':
+            door = "OPEN"
+        else:
+            door = "OPEN"
+
+        if(len(string_data)==6):
+            if int(string_data[:2]) > 12:
+                real_time = str(int(string_data[:2])-12) + ":{}".format(string_data[2:4]) + " PM"
+            else:
+                real_time = string_data[:2] + ":{}".format(string_data[2:4]) + " AM"
+            room = {
+                'floor': roomdata[-3],
+                'user': user,
+                'key': room_key,
+                'motion': str(presence()),
+                'room': roomdata[-2],
+                'role': roomdata[-1],
+                'time': real_time,
+                'temperature': temperature,
+                'door': door
+                }
+        else:
+            real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
+            room = {
+                'floor': roomdata[-3],
+                'user': user,
+                'key': room_key,
+                'motion': str(presence()),
+                'room': roomdata[-2],
+                'role': roomdata[-1],
+                'time': real_time,
+                'temperature': temperature,
+                'door':door,
+            }
+    except:
+        room = {
+                'floor': "Not Active",
+                'user': user,
+                'key': room_key,
+                'motion': "Not Active",
+                'room': "Not Active",
+                'role': "Not Active",
+                'time': "Not Active",
+                'temperature': "Not Active",
+                'door': "Not Active"
+            }
+
+    return room
 
 
 @app.route('/roominfo', methods=['POST'])
