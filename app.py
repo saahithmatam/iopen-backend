@@ -22,6 +22,8 @@ from bson.objectid import ObjectId
 conn = MongoClient('mongodb+srv://saahith:ricky123@cluster0.z2bzi.mongodb.net/test',tlsCAFile=certifi.where())
 print("Connected successfully!!!")
 
+
+
 today = str(date.today())
 run = str(datetime.datetime.now().time())
 test = run.split('.')
@@ -32,6 +34,7 @@ db = conn['dev']
 collection_hotels = db.hotels
 collection_passwords = db.passwords
 collection_users = db.users
+
 
 app = Flask(__name__)
 YOUR_DOMAIN = 'http://localhost:3000'
@@ -252,6 +255,8 @@ def floor_json(floor_number):
     sample = collection_hotels.find_one()
     sample_data = sample['data'][floor_number]
     floor_json = json.dumps(sample_data)
+    print(floor_json)
+    print(type(floor_json))
     return floor_json
 
     
@@ -474,6 +479,38 @@ def roominfo():
 def floorinfo():
     var = request.form.get('floorinfo')
     return redirect('/floorinfo/{}'.format(var))
+@app.route('/activerooms')
+def activerooms():
+    data_users = collection_users.find()
+    activeroomslist=[]
+    for x in data_users:
+        int_room = int(x['data']['room'])
+        if int_room not in activeroomslist:
+            activeroomslist.append(int_room)
+        else:
+            continue
+    rooms_json = json.dumps(activeroomslist)
+    print(rooms_json)
+    print(activeroomslist)
+    print("ACTIVE")
+    print(rooms_json)
+    print(type(rooms_json))
+    return rooms_json
+
+@app.route('/refreshuser', methods=['POST'])
+def refreshuser():
+    room = request.form.get("roominfo")
+    print(room)
+    uid = str(uuid.uuid4())
+    password = uid.split('-')[0]
+    print(password)
+    collection_passwords.update_one(
+            {"id": "hotelpasswords"},
+            {"$set":
+             {"data.{}".format(room):password}}
+        )
+    collection_users.delete_many({"data.room":room})
+    return redirect('http://localhost:3000/hotelportal')
 
 
 
@@ -510,6 +547,7 @@ def usersignin():
     incorrect = "Incorrect Password"
     data_passwords = collection_passwords.find_one()
     data_pass = data_passwords["data"]
+    
 
     for key, value in data_pass.items():
             if password == value:
@@ -518,6 +556,9 @@ def usersignin():
             else:
                 room = incorrect
 
+    int_room = int(room)
+    print(int_room)
+    print(type(int_room))
     if room != incorrect:
         user['firstname'] = firstname
         user['lastname'] = lastname
@@ -587,20 +628,7 @@ def createportaljs():
     success_url=YOUR_DOMAIN + '?success=true&session_id=create-portal',
     return redirect(success_url, code=303)
 
-@app.route('/refreshuser', methods=['POST'])
-def refreshuser():
-    room = request.form.get("roominfo")
-    print(room)
-    uid = str(uuid.uuid4())
-    password = uid.split('-')[0]
-    print(password)
-    collection_passwords.update_one(
-            {"id": "hotelpasswords"},
-            {"$set":
-             {"data.{}".format(room):password}}
-        )
-    collection_users.delete_many({"data.room":room})
-    return redirect('http://localhost:3000/hotelportal')
+
     
 
 if __name__ == '__main__':
