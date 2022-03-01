@@ -41,8 +41,21 @@ YOUR_DOMAIN = 'http://localhost:3000'
 
 
 
-@app.route('/customerportal/<room_number>')
-def customerportal(room_number):
+@app.route('/customerportal/<password>/<room_number>')
+def customerportal(password,room_number):
+    incorrect = "Incorrect Password"
+    room_value = ""
+    data_passwords = collection_passwords.find_one()
+    data_pass = data_passwords["data"]
+    
+
+    for key, value in data_pass.items():
+            if password == value:
+                room_value = key
+                break
+            else:
+                room_value = incorrect
+
     query = """
         query {
         dataset {
@@ -140,6 +153,7 @@ def customerportal(room_number):
     for key, value in pass_data.items():
         if room_number == key:
             room_key = value
+            room_key = password
             break
         else:
             room_key = "No Password"
@@ -236,7 +250,23 @@ def customerportal(room_number):
                 'door': "Not Active"
             }
 
-    return room
+    if(room_value != incorrect):
+        return room
+    else:
+        room = {
+                'floor': "Link Deactivated",
+                'user': "Link Deactivated",
+                'key': "Link Deactivated",
+                'motion': "Link Deactivated",
+                'room': "Link Deactivated",
+                'role': "Link Deactivated",
+                'time': "Link Deactivated",
+                'temperature': "Link Deactivated",
+                'door': "Link Deactivated"
+            }
+        return room
+
+    
 
 @app.route('/floorinfo/<floor_number>')
 def floor_json(floor_number):
@@ -536,7 +566,7 @@ def usersignin():
     if room == incorrect:
         return redirect('http://localhost:3000/error')
     else:
-        return redirect('http://localhost:3000/customerportal/{}'.format(room))
+        return redirect('http://localhost:3000/customerportal/{}/{}'.format(password,room))
 
 @app.route('/createhotelportal', methods = ['POST'])
 def createhotelportal():
