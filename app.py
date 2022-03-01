@@ -353,7 +353,8 @@ def roomnumber(room_number):
         data_user = collection_users.find_one({"data.room":room_number})
         user = data_user["data"]["lastname"] 
     except:
-        print("IT DID NOT WORK")
+        user = "No User"
+    
 
 
     def training():
