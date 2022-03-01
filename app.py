@@ -551,7 +551,8 @@ def roomnumber(room_number):
                 cores: 10
                 dims: "DataMessageGUID"
                 vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && MessageDate.date >= `%s` "
+                sort:[2]
+                filter2: "rooms_sensors.role != '' && room.name == '%s' "
                 ) {
                 size
                 rows(take: -1)
@@ -560,7 +561,7 @@ def roomnumber(room_number):
             }
         }
         }
-        """ % (room_number,today)
+        """ % (room_number)
         #change
         query_door = """
         query {
@@ -571,7 +572,8 @@ def roomnumber(room_number):
                 cores: 10
                 dims: "DataMessageGUID"
                 vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' && MessageDate.date >= `%s` "
+                sort:[2]
+                filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' "
                 ) {
                 size
                 rows(take: -1)
@@ -580,7 +582,7 @@ def roomnumber(room_number):
             }
         }
         }
-        """ % (room_number,today) 
+        """ % (room_number) 
         query_temp = """
         query {
         dataset {
@@ -590,7 +592,8 @@ def roomnumber(room_number):
                 cores: 10
                 dims: "DataMessageGUID"
                 vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && MessageDate.date >= `%s` && DataType == 'TemperatureData' && PlotLabel == 'Fahrenheit' "
+                sort:[2]
+                filter2: "rooms_sensors.role != '' && room.name == '%s' && DataType == 'TemperatureData' && PlotLabel == 'Fahrenheit' "
                 ) {
                 size
                 rows(take: -1)
@@ -599,7 +602,7 @@ def roomnumber(room_number):
             }
         }
         }
-        """ % (room_number,today)
+        """ % (room_number)
         basic = HTTPBasicAuth('utd1', 'NhWv0dEW')
 
 
