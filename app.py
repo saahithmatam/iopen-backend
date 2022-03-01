@@ -145,11 +145,8 @@ def customerportal(room_number):
             room_key = "No Password"
     try:
         data_user = collection_users.find_one({"data.room":room_number})
-        user = data_user["data"]["lastname"]
-        print("IT WORKED",str(user))
-        
+        user = data_user["data"]["lastname"]        
     except:
-        print("IT DID NOT WORK")
         user = "No User"
 
     def training():
@@ -173,7 +170,6 @@ def customerportal(room_number):
     def presence():
         presence = False
         room_list = training()
-        print(room_list)
 
         if room_list == ['True','False','True'] or room_list == ['True','True','True'] or room_list == ['True','True','False'] or room_list == ['False','True','True'] or room_list == ['False','True','False']:
             presence = True
@@ -183,11 +179,6 @@ def customerportal(room_number):
         return presence    
 
     try:
-        print("Presence: "+ str(presence()))
-    except:
-        print("Presence not detected!")
-
-    try:
         roomdata_door = data_door[-1] #change
         roomdata_temp = data_temp[-1]
         roomdata = data_room[-1]
@@ -195,9 +186,6 @@ def customerportal(room_number):
         temp_list = str(roomdata_temp[3]).split('.')
         temperature = int(temp_list[0])
         string_data = str(roomdata_door[1])
-
-        print(roomdata_door[3])
-        print(roomdata_door)
 
         if roomdata_door[3] == 'True':
             door = "CLOSED"
@@ -255,8 +243,6 @@ def floor_json(floor_number):
     sample = collection_hotels.find_one()
     sample_data = sample['data'][floor_number]
     floor_json = json.dumps(sample_data)
-    print(floor_json)
-    print(type(floor_json))
     return floor_json
 
     
@@ -365,12 +351,10 @@ def roomnumber(room_number):
             room_key = "No Password"
     try:
         data_user = collection_users.find_one({"data.room":room_number})
-        user = data_user["data"]["lastname"]
-        print("IT WORKED",str(user))
-        
+        user = data_user["data"]["lastname"] 
     except:
         print("IT DID NOT WORK")
-        user = "No User"
+
 
     def training():
         d = True
@@ -393,7 +377,6 @@ def roomnumber(room_number):
     def presence():
         presence = False
         room_list = training()
-        print(room_list)
 
         if room_list == ['True','False','True'] or room_list == ['True','True','True'] or room_list == ['True','True','False'] or room_list == ['False','True','True'] or room_list == ['False','True','False']:
             presence = True
@@ -403,11 +386,6 @@ def roomnumber(room_number):
         return presence    
 
     try:
-        print("Presence: "+ str(presence()))
-    except:
-        print("Presence not detected!")
-
-    try:
         roomdata_door = data_door[-1] #change
         roomdata_temp = data_temp[-1]
         roomdata = data_room[-1]
@@ -415,9 +393,6 @@ def roomnumber(room_number):
         temp_list = str(roomdata_temp[3]).split('.')
         temperature = int(temp_list[0])
         string_data = str(roomdata_door[1])
-
-        print(roomdata_door[3])
-        print(roomdata_door)
 
         if roomdata_door[3] == 'True':
             door = "CLOSED"
@@ -489,21 +464,15 @@ def activerooms():
             activeroomslist.append(int_room)
         else:
             continue
+    activeroomslist.sort()
     rooms_json = json.dumps(activeroomslist)
-    print(rooms_json)
-    print(activeroomslist)
-    print("ACTIVE")
-    print(rooms_json)
-    print(type(rooms_json))
     return rooms_json
 
 @app.route('/refreshuser', methods=['POST'])
 def refreshuser():
     room = request.form.get("roominfo")
-    print(room)
     uid = str(uuid.uuid4())
     password = uid.split('-')[0]
-    print(password)
     collection_passwords.update_one(
             {"id": "hotelpasswords"},
             {"$set":
@@ -522,7 +491,6 @@ def getdata():
     def getList(hotel_json):
         return list(hotel_json.keys())
     hotel_json_temp = getList(hotel_json)
-    print(hotel_json_temp)
     hotel_jsonreal = json.dumps(hotel_json_temp)
     return hotel_jsonreal
     
@@ -556,9 +524,6 @@ def usersignin():
             else:
                 room = incorrect
 
-    int_room = int(room)
-    print(int_room)
-    print(type(int_room))
     if room != incorrect:
         user['firstname'] = firstname
         user['lastname'] = lastname
@@ -601,14 +566,13 @@ def createhotelportal():
             # else:
             #     data.append(rows['col9'])
     
-    print(data)
+
     #insert password generation code here
     pass_dict = {}
 
     i = str(uuid.uuid4())
     password = i.split('-')[0]
-    print(password)
-    print(type(password))
+
 
 
     for floor in data:
