@@ -854,8 +854,7 @@ def createhotelportal():
             password = uid.split('-')[0]
             pass_dict[str_room] = password
     
-    collection_passwords.insert_one({"data":pass_dict})
-    collection_passwords.insert_one({"id":"hotelpasswords"})
+    collection_passwords.insert_one({"data":pass_dict,"id":"hotelpasswords"})
     collection_hotels.insert_one({"data":data})
     return redirect(YOUR_DOMAIN+"/hotelportal")
 
