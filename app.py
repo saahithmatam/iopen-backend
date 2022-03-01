@@ -779,7 +779,7 @@ def usersignin():
     password = request.form.get("pass")
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
-    departure_date = request.form.get("date")
+
 
     room = ""
     user = {}
@@ -797,7 +797,6 @@ def usersignin():
     if room != incorrect:
         user['firstname'] = firstname
         user['lastname'] = lastname
-        user['depart_date'] = departure_date
         user['room'] = room
         collection_users.insert_one({'data': user})
     else:
