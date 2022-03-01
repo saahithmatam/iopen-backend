@@ -497,8 +497,9 @@ def activerooms():
             continue
     activeroomslist.sort()
     rooms_json = json.dumps(activeroomslist)
+    
     return rooms_json
-
+    
 @app.route('/refreshuser', methods=['POST'])
 def refreshuser():
     room = request.form.get("roominfo")
