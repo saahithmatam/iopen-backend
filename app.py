@@ -77,26 +77,26 @@ def customerportal(password,room_number):
         }
         """ % (room_number)
         #change
-    query_door = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort:[2]
-                filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' "
-                ) {
-                size
-                rows(take: -1)
-                }
-            }
-            }
-        }
-        }
-        """ % (room_number) 
+    # query_door = """
+    #     query {
+    #     dataset {
+    #         streams {
+    #         messages {
+    #             report(
+    #             cores: 10
+    #             dims: "DataMessageGUID"
+    #             vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
+    #             sort:[2]
+    #             filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' "
+    #             ) {
+    #             size
+    #             rows(take: -1)
+    #             }
+    #         }
+    #         }
+    #     }
+    #     }
+    #     """ % (room_number) 
     query_temp = """
         query {
         dataset {
@@ -124,7 +124,7 @@ def customerportal(password,room_number):
 
     json_query = { 'query' : query }
     json_temp_query = {'query' : query_temp }
-    json_door_query = {'query' : query_door } #change
+    # json_door_query = {'query' : query_door } #change
 
 
     headers = {
@@ -134,16 +134,16 @@ def customerportal(password,room_number):
 
     r = requests.post(url=url, json=json_query, headers=headers, auth=basic)
     t = requests.post(url=url, json=json_temp_query, headers=headers, auth=basic)
-    d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
+    # d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
 
 
     data = json.loads(r.text)
     data_t = json.loads(t.text)
-    data_d = json.loads(d.text) #change
+    # data_d = json.loads(d.text) #change
 
     data_room = data['data']['dataset']['streams']['messages']['report']['rows']
     data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
-    data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
+    # data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
 
     password_data = collection_passwords.find_one()
     pass_data = password_data["data"]
@@ -171,7 +171,7 @@ def customerportal(password,room_number):
                 
         for rows in data_room:
             if rows[-1] == 'M':
-                m = rows[-7]
+                m = rows[-7]                                #Change rows[-7] to rows[]
             elif rows[-1] == 'MTH':
                 mth = rows[-7]
             else:
@@ -193,9 +193,10 @@ def customerportal(password,room_number):
         return presence    
 
     try:
-        roomdata_door = data_door[-1] #change
+        # roomdata_door = data_door[-1] #change
         roomdata_temp = data_temp[-1]
         roomdata = data_room[-1]
+        roomdata_door = str(training()[0])
 
         temp_list = str(roomdata_temp[3]).split('.')
         temperature = int(temp_list[0])
