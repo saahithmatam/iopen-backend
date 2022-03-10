@@ -58,66 +58,66 @@ def customerportal(password,room_number):
                 room_value = incorrect
 
     query = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort:[2]
-                filter2: "rooms_sensors.role != '' && room.name == '%s' "
-                ) {
-                size
-                rows(take: -1)
+            query {
+            dataset {
+                streams {
+                messages {
+                    report(
+                    cores: 10
+                    dims: "DataMessageGUID"
+                    vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
+                    sort:[2]
+                    filter2: "rooms_sensors.role != '' && room.name == '%s' "
+                    ) {
+                    size
+                    rows(take: -1)
+                    }
+                }
                 }
             }
             }
-        }
-        }
-        """ % (room_number)
-        #change
-    # query_door = """
-    #     query {
-    #     dataset {
-    #         streams {
-    #         messages {
-    #             report(
-    #             cores: 10
-    #             dims: "DataMessageGUID"
-    #             vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-    #             sort:[2]
-    #             filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' "
-    #             ) {
-    #             size
-    #             rows(take: -1)
-    #             }
-    #         }
-    #         }
-    #     }
-    #     }
-    #     """ % (room_number) 
+            """ % (room_number)
+            #change
+    query_door = """
+            query {
+            dataset {
+                streams {
+                messages {
+                    report(
+                    cores: 10
+                    dims: "DataMessageGUID"
+                    vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
+                    sort:[2]
+                    filter2: "rooms_sensors.role != '' && DataType == 'DoorData' && room.name == '%s' "
+                    ) {
+                    size
+                    rows(take: -1)
+                    }
+                }
+                }
+            }
+            }
+            """ % (room_number) 
     query_temp = """
-        query {
-        dataset {
-            streams {
-            messages {
-                report(
-                cores: 10
-                dims: "DataMessageGUID"
-                vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
-                sort:[2]
-                filter2: "rooms_sensors.role != '' && room.name == '%s' && DataType == 'TemperatureData' && PlotLabel == 'Fahrenheit' "
-                ) {
-                size
-                rows(take: -1)
+            query {
+            dataset {
+                streams {
+                messages {
+                    report(
+                    cores: 10
+                    dims: "DataMessageGUID"
+                    vals: "MessageDate.time, DataType, DataValue, PlotLabel, Battery, SignalStrength, floor.name, room.name, rooms_sensors.role"
+                    sort:[2]
+                    filter2: "rooms_sensors.role != '' && room.name == '%s' && DataType == 'TemperatureData' && PlotLabel == 'Fahrenheit' "
+                    ) {
+                    size
+                    rows(take: -1)
+                    }
+                }
                 }
             }
             }
-        }
-        }
-        """ % (room_number)
+            """ % (room_number)
     basic = HTTPBasicAuth('utd1', 'NhWv0dEW')
 
 
@@ -125,7 +125,7 @@ def customerportal(password,room_number):
 
     json_query = { 'query' : query }
     json_temp_query = {'query' : query_temp }
-    # json_door_query = {'query' : query_door } #change
+    json_door_query = {'query' : query_door } #change
 
 
     headers = {
@@ -135,16 +135,16 @@ def customerportal(password,room_number):
 
     r = requests.post(url=url, json=json_query, headers=headers, auth=basic)
     t = requests.post(url=url, json=json_temp_query, headers=headers, auth=basic)
-    # d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
+    d = requests.post(url=url, json=json_door_query, headers=headers, auth=basic) #change
 
 
     data = json.loads(r.text)
     data_t = json.loads(t.text)
-    # data_d = json.loads(d.text) #change
+    data_d = json.loads(d.text) #change
 
     data_room = data['data']['dataset']['streams']['messages']['report']['rows']
     data_temp = data_t['data']['dataset']['streams']['messages']['report']['rows']
-    # data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
+    data_door = data_d['data']['dataset']['streams']['messages']['report']['rows']#change
 
     password_data = collection_passwords.find_one()
     pass_data = password_data["data"]
@@ -154,15 +154,16 @@ def customerportal(password,room_number):
     for key, value in pass_data.items():
         if room_number == key:
             room_key = value
-            room_key = password
             break
         else:
             room_key = "No Password"
     try:
         data_user = collection_users.find_one({"data.room":room_number})
-        user = data_user["data"]["lastname"]        
+        user = data_user["data"]["lastname"] 
     except:
         user = "No User"
+    
+
 
     def training():
         d = True
@@ -172,7 +173,7 @@ def customerportal(password,room_number):
                 
         for rows in data_room:
             if rows[-1] == 'M':
-                m = rows[-7]                                #Change rows[-7] to rows[]
+                m = rows[-7]
             elif rows[-1] == 'MTH':
                 mth = rows[-7]
             else:
@@ -194,10 +195,9 @@ def customerportal(password,room_number):
         return presence    
 
     try:
-        # roomdata_door = data_door[-1] #change
+        roomdata_door = data_door[-1] #change
         roomdata_temp = data_temp[-1]
         roomdata = data_room[-1]
-        roomdata_door = str(training()[0])
 
         temp_list = str(roomdata_temp[3]).split('.')
         temperature = int(temp_list[0])
