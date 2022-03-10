@@ -590,8 +590,11 @@ def usersignin():
     if room == incorrect:
         return redirect('http://localhost:3000/error')
     else:
-        twilio_message(phonenumber)
-        return redirect('http://localhost:3000/customerportal/{}/{}'.format(password,room))
+        try:
+            twilio_message(phonenumber)
+            return redirect('http://localhost:3000/customerportal/{}/{}'.format(password,room))
+        except:
+            return redirect('http://localhost:3000/error')
 
 @app.route('/createhotelportal', methods = ['POST'])
 def createhotelportal():
