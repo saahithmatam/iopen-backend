@@ -1,3 +1,4 @@
+import re
 from flask import Flask, json,render_template,request,redirect
 import flask
 import csv
@@ -7,11 +8,9 @@ import json
 import requests
 from requests.auth import HTTPBasicAuth
 import time
-import datetime
 from datetime import date
 from datetime import datetime
 from difflib import SequenceMatcher
-import datetime
 import uuid
 from bson.objectid import ObjectId
 from twiliomessage import *
@@ -26,7 +25,7 @@ print("Connected successfully!!!")
 
 
 today = str(date.today())
-run = str(datetime.datetime.now().time())
+run = str(datetime.now().time())
 test = run.split('.')
 
 current_time = test[0]
@@ -543,8 +542,27 @@ def usersignin():
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
     phonenumber  = request.form.get("phonenumber")
+    now = datetime.now()
+    dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
+    date = dt_string.split(" ")[0]
+    time = dt_string.split(" ")[1]
+    real_time = ""
+    hours = time.split(":")[0]
+    minutes = time.split(":")[1]
 
+    if int(hours) > 12:
+        real_time = str(int(hours)-12) + ":{}".format(minutes) + " PM"
+    else:
+        real_time = hours[1] + ":{}".format(minutes) + " AM"
 
+    print(real_time)
+    # real_time = ''
+    # print(len(time))
+    # if(len(time)==8):
+    #         if int(time[:2]) > 12:
+    #             real_time = str(int(time[:2])-12) + ":{}".format(time[2:4]) + " PM"
+    #         else:
+    #             real_time = time[:2] + ":{}".format(time[2:4]) + " AM"
     room = ""
     user = {}
     incorrect = "Incorrect Password"
@@ -563,6 +581,8 @@ def usersignin():
         user['firstname'] = firstname
         user['lastname'] = lastname
         user['room'] = room
+        user['date'] = date
+        user['time'] = real_time
         collection_users.insert_one({'data': user})
     else:
         room = incorrect
@@ -621,6 +641,29 @@ def createhotelportal():
     collection_passwords.insert_one({"data":pass_dict,"id":"hotelpasswords"})
     collection_hotels.insert_one({"data":data})
     return redirect(YOUR_DOMAIN+"/hotelportal")
+
+@app.route('/users')
+def users():
+    data_users = collection_users.find()
+    activeusers=[]
+    print("Test 1")
+    for x in data_users:
+        user_data = {}
+        room = int(x['data']['room'])
+        firstname = x['data']['firstname']
+        lastname = x['data']['lastname']
+        date = x['data']['date']
+        time = x['data']['time']
+
+        user_data['time'] = time
+        user_data['date'] = date
+        user_data['room'] = room
+        user_data['firstname'] = firstname
+        user_data['lastname'] = lastname
+        activeusers.append(user_data)
+    activeusers.reverse()
+    rooms_json = json.dumps(activeusers)
+    return rooms_json
 
 
 @app.route('/create-portal', methods=['POST'])
