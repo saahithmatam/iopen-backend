@@ -14,6 +14,7 @@ from difflib import SequenceMatcher
 import datetime
 import uuid
 from bson.objectid import ObjectId
+from twiliomessage import *
 
 
 
@@ -541,6 +542,7 @@ def usersignin():
     password = request.form.get("pass")
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
+    phonenumber  = request.form.get("phonenumber")
 
 
     room = ""
@@ -568,6 +570,7 @@ def usersignin():
     if room == incorrect:
         return redirect('http://localhost:3000/error')
     else:
+        twilio_message(phonenumber)
         return redirect('http://localhost:3000/customerportal/{}/{}'.format(password,room))
 
 @app.route('/createhotelportal', methods = ['POST'])
