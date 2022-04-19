@@ -275,8 +275,7 @@ def floor_json(floor_number):
     sample_data = sample['data'][floor_number]
     floor_json = json.dumps(sample_data)
     return floor_json
-
-    
+ 
 
 @app.route('/roominfo/<room_number>')
 def roomnumber(room_number):
@@ -614,11 +613,20 @@ def createhotelportal():
             except:
                 data[str(rows['col9'])[:1]] = []
                 data[str(rows['col9'])[:1]].append(str(rows['col9']))
+                print(str(rows['col9']))
+                print(type(str(rows['col9'])))
+            
             
     for key in data:
         for el in range(0, len(data[key])):
             data[key][el] = int(data[key][el])
         data[key].sort()
+    
+    for key in data:
+        for el in range(0, len(data[key])):
+            data[key][el] = str(data[key][el])
+        
+
 
             # if(rows['col9'] in data):
             #     pass
