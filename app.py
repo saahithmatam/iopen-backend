@@ -536,6 +536,24 @@ def home():
 def hotelportal():
     return render_template('hotelportal.html')
 
+@app.route('/activeusers')
+def activeusers():
+    data = []
+    data_users = collection_users.find({})
+    print(str(data_users))
+    for user in data_users:
+        user_dict = {}
+        user_dict['id']= str(uuid.uuid4())
+        user_dict['name']=user['data']['firstname']+" "+user['data']['lastname']
+        user_dict['room']= user['data']['room']
+        user_dict['dateCreated']= user['data']['date']
+        user_dict['time']= user['data']['time']
+        user_dict['verified'] = True
+        data.append(user_dict)
+    activeofficialusers = json.dumps(data)
+    return activeofficialusers
+
+
 @app.route('/usersignin', methods=['POST'])
 def usersignin():
     password = request.form.get("password")
