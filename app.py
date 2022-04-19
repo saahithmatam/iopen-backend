@@ -275,7 +275,7 @@ def floor_json(floor_number):
     sample_data = sample['data'][floor_number]
     floor_json = json.dumps(sample_data)
     return floor_json
- 
+
 
 @app.route('/roominfo/<room_number>')
 def roomnumber(room_number):
@@ -538,10 +538,11 @@ def hotelportal():
 
 @app.route('/usersignin', methods=['POST'])
 def usersignin():
-    password = request.form.get("pass")
+    password = request.form.get("password")
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
     phonenumber  = request.form.get("phonenumber")
+
     now = datetime.now()
     dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
     date = dt_string.split(" ")[0]
@@ -594,7 +595,7 @@ def usersignin():
             print("ROOM NOT INCORRECT 1")
             twilio_message(phonenumber)
             print("ROOM NOT INCORRECT 2")
-            return redirect('http://localhost:3000/customerportal/{}/{}'.format(password,room))
+            return redirect('http://localhost:3000/volt-pro-react#/customerportal/{}/{}'.format(password,room))
         except:
             print("ROOM NOT INCORRECT 3")
             return redirect('http://localhost:3000/error')
