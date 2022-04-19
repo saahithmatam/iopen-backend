@@ -492,10 +492,11 @@ def activerooms():
     for x in data_users:
         int_room = int(x['data']['room'])
         if int_room not in activeroomslist:
-            activeroomslist.append(int_room)
+            activeroomslist.append(str(int_room))
         else:
             continue
     activeroomslist.sort()
+    activeroomslist = list(dict.fromkeys(activeroomslist))
     rooms_json = json.dumps(activeroomslist)
     
     return rooms_json
@@ -590,9 +591,12 @@ def usersignin():
         return redirect('http://localhost:3000/error')
     else:
         try:
+            print("ROOM NOT INCORRECT 1")
             twilio_message(phonenumber)
+            print("ROOM NOT INCORRECT 2")
             return redirect('http://localhost:3000/customerportal/{}/{}'.format(password,room))
         except:
+            print("ROOM NOT INCORRECT 3")
             return redirect('http://localhost:3000/error')
 
 @app.route('/createhotelportal', methods = ['POST'])
@@ -651,7 +655,7 @@ def createhotelportal():
     
     collection_passwords.insert_one({"data":pass_dict,"id":"hotelpasswords"})
     collection_hotels.insert_one({"data":data})
-    return redirect(YOUR_DOMAIN+"/hotelportal")
+    return redirect(YOUR_DOMAIN+"/hotelportal#/hotelportal")
 
 @app.route('/users')
 def users():

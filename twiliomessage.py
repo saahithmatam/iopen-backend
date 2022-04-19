@@ -6,7 +6,9 @@ from twilio.rest import *
 # and set the environment variables. See http://twil.io/secure
 def twilio_message(number):
     account_sid = os.environ['TWILIO_ACCOUNT_SID']
+    print(account_sid)
     auth_token = os.environ['TWILIO_AUTH_TOKEN']
+    print(auth_token)
     client = Client(account_sid, auth_token)
 
     message = client.messages \
