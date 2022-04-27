@@ -547,6 +547,51 @@ def gethkportal():
 
     return hk_json
 
+@app.route('/employeesignin', methods=['POST'])
+def employeesignin():
+    admin = "Admin"
+    housekeeper = "HouseKeeper"
+    member = "Member"
+    print(request.form)
+    firstname = request.form.get("firstname")
+    lastname = request.form.get("lastname")
+    password = request.form.get("password")
+    authentication = 0
+    
+    data = collection_team.find_one()["data"]
+    
+    for user in range(0,len(data)):
+        if data[user]['firstname'].lower() == firstname.lower() and data[user]['lastname'].lower() == lastname.lower() and data[user]['password'] == password:
+            authentication = 1
+            if data[user]['position'].lower() == housekeeper.lower():
+                return redirect('http://localhost:3000/volt-pro-react#/housekeepingportal')
+            elif data[user]['position'].lower() == member.lower():
+                return redirect('http://localhost:3000/volt-pro-react#/')
+            else:
+                return redirect('http://localhost:3000/volt-pro-react#/')
+        else:
+            continue
+    if authentication == 0:
+        return redirect('http://localhost:3000/volt-pro-react#/examples/404')
+
+@app.route('/employeedeletion', methods = ['POST'])
+def employeedeletion():
+    firstname = request.form.get('firstname')
+    password = request.form.get('password')
+    data = collection_team.find_one()["data"]
+    new_data = []
+    for employee in range(0,len(data)):
+        if data[employee]['firstname'].lower() == firstname.lower() and data[employee]['password'] == password:
+            continue
+        else:
+            new_data.append(data[employee])
+    
+    collection_team.update_one(
+            {"id": "team"},
+            {"$set":
+             {"data":new_data}}
+        )
+    return redirect('http://localhost:3000/volt-pro-react#/team')
 @app.route('/hkcheckin', methods = ['POST'])
 def gethkcheckin():
     roomcheckin = str(request.form.get("roomnumber"))
