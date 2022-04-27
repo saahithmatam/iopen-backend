@@ -35,6 +35,7 @@ collection_hotels = db.hotels
 collection_passwords = db.passwords
 collection_users = db.users
 collection_housekeeping = db.housekeeping
+collection_team = db.team
 
 
 app = Flask(__name__)
@@ -573,7 +574,91 @@ def gethkcheckin():
         return redirect("http://localhost:3000/volt-pro-react#/housekeeping")
     except:
         return "Failed to Update HK"
+
+@app.route('/createteam', methods=["POST"])
+def createteam():
+
+    try:
+        data = collection_team.find_one()["data"]
+        team_dict = {}
+
+        firstnames = request.form.getlist('firstname')
+        lastnames = request.form.getlist('lastname')
+        positions = request.form.getlist('position')
+        passwords = request.form.getlist('password')
+
+        for num in range(0,len(firstnames)):
+            team_dict={}
+            team_dict['firstname'] = firstnames[num]
+            team_dict['lastname'] = lastnames[num]
+            team_dict['position'] = positions[num]
+            team_dict['password'] = passwords[num]
+            data.append(team_dict)
+
+        collection_team.update_one(
+                {"id": "team"},
+                {"$set":
+                {"data":data}}
+            )
+        return redirect("http://localhost:3000/volt-pro-react#/team")
+        
+    except:
+        team_list = []
+        team_dict = {}
+
+        firstnames = request.form.getlist('firstname')
+        lastnames = request.form.getlist('lastname')
+        positions = request.form.getlist('position')
+        passwords = request.form.getlist('password')
+
+        for num in range(0,len(firstnames)):
+            team_dict={}
+            team_dict['firstname'] = firstnames[num]
+            team_dict['lastname'] = lastnames[num]
+            team_dict['position'] = positions[num]
+            team_dict['password'] = passwords[num]
+            team_list.append(team_dict)
+
+        
+        collection_team.insert_one({'data': team_list, 'id': 'team'})
+        return redirect("http://localhost:3000/volt-pro-react#/team")
+
+@app.route('/getteam', methods=["GET"])
+def getteam():
+    team_json = collection_team.find_one()["data"]
+    jsonteam = json.dumps(team_json)
+    return jsonteam
+
+
+
     
+@app.route('/hkusercheckin', methods = ['POST'])
+def gethkusercheckin():
+    roomcheckin = str(request.form.get("roomnumber"))
+    hotelportalfloor = str(roomcheckin[0])
+    print(roomcheckin)
+    data = collection_housekeeping.find_one()["data"]
+    new_data = data
+    print(type(new_data))
+    
+    for room in range(0,len(new_data)):
+        if new_data[room]['room'] == roomcheckin:
+            if new_data[room]['status'] == "CHECK IN":
+                new_data[room]['status'] = "CHECK OUT"
+            else:
+                new_data[room]['status'] = "CHECK IN"
+        else:
+            continue
+
+    try:
+        collection_housekeeping.update_one(
+                {"id": "housekeeping"},
+                {"$set":
+                {"data":new_data}}
+            )
+        return redirect("http://localhost:3000/housekeeping#/housekeepingportal")
+    except:
+        return "Failed to Update HK"
 
 @app.route('/createdhotelportal', methods = ['GET'])
 def getdata():
