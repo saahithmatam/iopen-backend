@@ -572,7 +572,7 @@ def employeesignin():
         else:
             continue
     if authentication == 0:
-        return redirect('http://localhost:3000/volt-pro-react#/examples/404')
+        return redirect('http://localhost:3000/volt-pro-react#/examples/incorrectpassword')
 
 @app.route('/employeedeletion', methods = ['POST'])
 def employeedeletion():
