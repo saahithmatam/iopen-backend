@@ -34,6 +34,7 @@ db = conn['dev']
 collection_hotels = db.hotels
 collection_passwords = db.passwords
 collection_users = db.users
+collection_housekeeping = db.housekeeping
 
 
 app = Flask(__name__)
@@ -162,7 +163,15 @@ def customerportal(password,room_number):
     except:
         user = "No User"
     
-
+    data_hk = collection_housekeeping.find_one()["data"]
+    for room in range(0,len(data_hk)):
+        if data_hk[room]["room"] == str(room_number):
+            if data_hk[room]["status"] == "CHECK IN":
+                housekeepingdata = "INACTIVE"
+            else:
+                housekeepingdata = "ACTIVE"
+        else:
+            continue
 
     def training():
         d = True
@@ -223,7 +232,8 @@ def customerportal(password,room_number):
                 'role': roomdata[-1],
                 'time': real_time,
                 'temperature': temperature,
-                'door': door
+                'door': door,
+                'housekeeping': housekeepingdata
                 }
         else:
             real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
@@ -237,6 +247,7 @@ def customerportal(password,room_number):
                 'time': real_time,
                 'temperature': temperature,
                 'door':door,
+                'housekeeping': housekeepingdata
             }
     except:
         room = {
@@ -248,7 +259,8 @@ def customerportal(password,room_number):
                 'role': "Not Active",
                 'time': "Not Active",
                 'temperature': "Not Active",
-                'door': "Not Active"
+                'door': "Not Active",
+                'housekeeping': housekeepingdata
             }
 
     if(room_value != incorrect):
@@ -263,7 +275,8 @@ def customerportal(password,room_number):
                 'role': "Link Deactivated",
                 'time': "Link Deactivated",
                 'temperature': "Link Deactivated",
-                'door': "Link Deactivated"
+                'door': "Link Deactivated",
+                'housekeeping': housekeepingdata
             }
         return room
 
@@ -385,7 +398,15 @@ def roomnumber(room_number):
     except:
         user = "No User"
     
-
+    data_hk = collection_housekeeping.find_one()["data"]
+    for room in range(0,len(data_hk)):
+        if data_hk[room]["room"] == str(room_number):
+            if data_hk[room]["status"] == "CHECK IN":
+                housekeepingdata = "INACTIVE"
+            else:
+                housekeepingdata = "ACTIVE"
+        else:
+            continue
 
     def training():
         d = True
@@ -446,7 +467,8 @@ def roomnumber(room_number):
                 'role': roomdata[-1],
                 'time': real_time,
                 'temperature': temperature,
-                'door': door
+                'door': door,
+                'housekeeping': housekeepingdata
                 }
         else:
             real_time = string_data[:1] + ":{}".format(string_data[1:3]) + " AM"
@@ -460,6 +482,7 @@ def roomnumber(room_number):
                 'time': real_time,
                 'temperature': temperature,
                 'door':door,
+                'housekeeping': housekeepingdata
             }
     except:
         room = {
@@ -471,7 +494,8 @@ def roomnumber(room_number):
                 'role': "Not Active",
                 'time': "Not Active",
                 'temperature': "Not Active",
-                'door': "Not Active"
+                'door': "Not Active",
+                'housekeeping': housekeepingdata
             }
 
     return room
@@ -514,8 +538,42 @@ def refreshuser():
     collection_users.delete_many({"data.room":room})
     return redirect('http://localhost:3000/hotelportal')
 
+@app.route('/housekeepingportal')
+def gethkportal():
+    hk = collection_housekeeping.find_one()["data"]
+    hk_json = json.dumps(hk)
+    print(hk_json)
 
+    return hk_json
 
+@app.route('/hkcheckin', methods = ['POST'])
+def gethkcheckin():
+    roomcheckin = str(request.form.get("roomnumber"))
+    hotelportalfloor = str(roomcheckin[0])
+    print(roomcheckin)
+    data = collection_housekeeping.find_one()["data"]
+    new_data = data
+    print(type(new_data))
+    
+    for room in range(0,len(new_data)):
+        if new_data[room]['room'] == roomcheckin:
+            if new_data[room]['status'] == "CHECK IN":
+                new_data[room]['status'] = "CHECK OUT"
+            else:
+                new_data[room]['status'] = "CHECK IN"
+        else:
+            continue
+
+    try:
+        collection_housekeeping.update_one(
+                {"id": "housekeeping"},
+                {"$set":
+                {"data":new_data}}
+            )
+        return redirect("http://localhost:3000/volt-pro-react#/housekeeping")
+    except:
+        return "Failed to Update HK"
+    
 
 @app.route('/createdhotelportal', methods = ['GET'])
 def getdata():
@@ -621,6 +679,7 @@ def usersignin():
 @app.route('/createhotelportal', methods = ['POST'])
 def createhotelportal():
     data = {}
+    housekeeping = []
     # Open a csv reader called DictReader
     with open(request.form.get('myfile'), encoding='utf-8') as csvf:
         csvReader = csv.DictReader(csvf)
@@ -646,8 +705,16 @@ def createhotelportal():
         data[key].sort()
     
     for key in data:
+        hkdict={}
         for el in range(0, len(data[key])):
             data[key][el] = str(data[key][el])
+            hkdict["room"]= str(data[key][el])
+            hkdict["status"] = "CHECK IN"
+            print(hkdict)
+            housekeeping.append(hkdict)
+            hkdict={}
+    
+    
         
 
 
@@ -671,7 +738,8 @@ def createhotelportal():
             uid = str(uuid.uuid4())
             password = uid.split('-')[0]
             pass_dict[str_room] = password
-    
+
+    collection_housekeeping.insert_one({"data": housekeeping, "id":"housekeeping"})
     collection_passwords.insert_one({"data":pass_dict,"id":"hotelpasswords"})
     collection_hotels.insert_one({"data":data})
     return redirect(YOUR_DOMAIN+"/hotelportal#/hotelportal")
