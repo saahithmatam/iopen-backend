@@ -20,7 +20,7 @@ from twiliomessage import *
 
 
 conn = MongoClient('mongodb+srv://saahith:ricky123@cluster0.z2bzi.mongodb.net/test',tlsCAFile=certifi.where())
-print("Connected successfully!!!")
+
 
 
 
@@ -542,8 +542,6 @@ def refreshuser():
 def gethkportal():
     hk = collection_housekeeping.find_one()["data"]
     hk_json = json.dumps(hk)
-    print(hk_json)
-
     return hk_json
 
 @app.route('/employeesignin', methods=['POST'])
@@ -551,7 +549,6 @@ def employeesignin():
     admin = "Admin"
     housekeeper = "HouseKeeper"
     member = "Member"
-    print(request.form)
     firstname = request.form.get("firstname")
     lastname = request.form.get("lastname")
     password = request.form.get("password")
@@ -595,10 +592,8 @@ def employeedeletion():
 def gethkcheckin():
     roomcheckin = str(request.form.get("roomnumber"))
     hotelportalfloor = str(roomcheckin[0])
-    print(roomcheckin)
     data = collection_housekeeping.find_one()["data"]
     new_data = data
-    print(type(new_data))
     
     for room in range(0,len(new_data)):
         if new_data[room]['room'] == roomcheckin:
@@ -680,10 +675,8 @@ def getteam():
 def gethkusercheckin():
     roomcheckin = str(request.form.get("roomnumber"))
     hotelportalfloor = str(roomcheckin[0])
-    print(roomcheckin)
     data = collection_housekeeping.find_one()["data"]
     new_data = data
-    print(type(new_data))
     
     for room in range(0,len(new_data)):
         if new_data[room]['room'] == roomcheckin:
@@ -727,7 +720,6 @@ def hotelportal():
 def activeusers():
     data = []
     data_users = collection_users.find({})
-    print(str(data_users))
     for user in data_users:
         user_dict = {}
         user_dict['id']= str(uuid.uuid4())
@@ -761,9 +753,8 @@ def usersignin():
     else:
         real_time = hours[1] + ":{}".format(minutes) + " AM"
 
-    print(real_time)
+
     # real_time = ''
-    # print(len(time))
     # if(len(time)==8):
     #         if int(time[:2]) > 12:
     #             real_time = str(int(time[:2])-12) + ":{}".format(time[2:4]) + " PM"
@@ -797,12 +788,9 @@ def usersignin():
         return redirect('http://localhost:3000/error')
     else:
         try:
-            print("ROOM NOT INCORRECT 1")
             twilio_message(phonenumber)
-            print("ROOM NOT INCORRECT 2")
             return redirect('http://localhost:3000/volt-pro-react#/customerportal/{}/{}'.format(password,room))
         except:
-            print("ROOM NOT INCORRECT 3")
             return redirect('http://localhost:3000/error')
 
 @app.route('/createhotelportal', methods = ['POST'])
@@ -824,8 +812,6 @@ def createhotelportal():
             except:
                 data[str(rows['col9'])[:1]] = []
                 data[str(rows['col9'])[:1]].append(str(rows['col9']))
-                print(str(rows['col9']))
-                print(type(str(rows['col9'])))
             
             
     for key in data:
@@ -839,7 +825,6 @@ def createhotelportal():
             data[key][el] = str(data[key][el])
             hkdict["room"]= str(data[key][el])
             hkdict["status"] = "CHECK IN"
-            print(hkdict)
             housekeeping.append(hkdict)
             hkdict={}
     
@@ -877,7 +862,6 @@ def createhotelportal():
 def users():
     data_users = collection_users.find()
     activeusers=[]
-    print("Test 1")
     for x in data_users:
         user_data = {}
         room = int(x['data']['room'])
