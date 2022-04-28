@@ -290,7 +290,6 @@ def floor_json(floor_number):
     floor_json = json.dumps(sample_data)
     return floor_json
 
-
 @app.route('/roominfo/<room_number>')
 def roomnumber(room_number):
     query = """
@@ -506,10 +505,10 @@ def roomnumber(room_number):
 def roominfo():
     var = request.form.get('roominfo')
     return redirect('/roominfo/{}'.format(var))
-@app.route('/floorinfo', methods=['POST'])
-def floorinfo():
-    var = request.form.get('floorinfo')
-    return redirect('/floorinfo/{}'.format(var))
+# @app.route('/floorinfo', methods=['POST'])
+# def floorinfo():
+#     var = request.form.get('floorinfo')
+#     return redirect('/floorinfo/{}'.format(var))
 @app.route('/activerooms')
 def activerooms():
     data_users = collection_users.find()
